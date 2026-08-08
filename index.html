@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOOD CONTROL // MSRK</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:#0a0905;color:#E8E0C8;font-family:'Share Tech Mono',monospace;}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;}
+h1{font-family:'VT323',monospace;font-size:28px;letter-spacing:.15em;color:#e34a11;text-align:center;}
+.hint{font-size:12px;color:#5A3D00;letter-spacing:.1em;text-align:center;max-width:340px;}
+
+/* ——— LOGIN ——— */
+#login-box{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;}
+#login-box input{background:#110F05;border:1px solid #333;color:#E8E0C8;padding:12px 10px;font-family:'Share Tech Mono',monospace;font-size:14px;letter-spacing:.05em;outline:none;}
+#login-box input:focus{border-color:#e34a11;}
+#login-box button{padding:12px 10px;border:1px solid #e34a11;background:#1E1800;color:#e34a11;font-family:'Share Tech Mono',monospace;font-size:14px;letter-spacing:.15em;cursor:pointer;}
+#login-box button:active{transform:scale(.97);}
+#login-err{font-size:11px;color:#ff3b3b;letter-spacing:.05em;min-height:14px;text-align:center;}
+
+/* ——— MOOD PANEL ——— */
+#panel{display:none;flex-direction:column;align-items:center;gap:18px;width:100%;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:360px;}
+.mood-btn{padding:20px 10px;border:1px solid #333;background:#110F05;color:#E8E0C8;font-family:'Share Tech Mono',monospace;font-size:15px;letter-spacing:.12em;cursor:pointer;transition:.15s;}
+.mood-btn:active{transform:scale(.96);}
+#b-normal{border-color:#154060;color:#60D0FF;}
+#b-despair{border-color:#3a3a3a;color:#c9c9c9;}
+#b-rage{border-color:#7a0000;color:#ff3b3b;}
+#b-joyful{border-color:#0e6b28;color:#39ff7a;}
+#b-sad{border-color:#100e6b;color:#3c39ff;}
+#b-loving{border-color:#6b0e44;color:#ff398c;}
+#b-anxiety{border-color:#6b520e;color:#ffdb39;}
+#b-flow{border-color:#dadada;color:#ececec;}
+.mood-btn.active{background:#1E1800;box-shadow:0 0 12px currentColor;}
+#status{font-size:12px;color:#5A3D00;letter-spacing:.1em;margin-top:6px;}
+#logout{font-size:11px;color:#5A3D00;letter-spacing:.1em;text-decoration:underline;cursor:pointer;background:none;border:none;font-family:'Share Tech Mono',monospace;}
+</style>
+</head>
+<body>
+  <h1>MOOD CONTROL</h1>
+
+  <!-- ЭКРАН ВХОДА -->
+  <div id="login-box">
+    <input type="email" id="login-email" placeholder="" autocomplete="username">
+    <input type="password" id="login-pass" placeholder="" autocomplete="current-password">
+    <button onclick="doLogin()">ENTER</button>
+    <div id="login-err"></div>
+  </div>
+
+  <!-- ПАНЕЛЬ УПРАВЛЕНИЯ (видна только после входа) -->
+  <div id="panel">
+    <div class="grid">
+      <button class="mood-btn" id="b-normal"  onclick="setMood('normal')">NORMA</button>
+      <button class="mood-btn" id="b-despair" onclick="setMood('despair')">DESPAIR</button>
+      <button class="mood-btn" id="b-rage"    onclick="setMood('rage')">RAGE</button>
+      <button class="mood-btn" id="b-joyful"  onclick="setMood('joyful')">JOYFULL</button>
+      <button class="mood-btn" id="b-sad"     onclick="setMood('sad')">SAD</button>
+      <button class="mood-btn" id="b-loving"  onclick="setMood('loving')">LOVING</button>
+      <button class="mood-btn" id="b-anxiety" onclick="setMood('anxiety')">ANXIETY</button>
+      <button class="mood-btn" id="b-flow"    onclick="setMood('flow')">FLOW</button>
+    </div>
+    <button id="logout" onclick="doLogout()">EXIT</button>
+  </div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+// ВСТАВЬ ТОТ ЖЕ firebaseConfig, что и в index.html
+const firebaseConfig = {
+   apiKey: "AIzaSyB_TFv2gzLXMToJtxkcrl4cLdKWYvIGH2w",
+    authDomain: "imoodtrackeri.firebaseapp.com",
+    databaseURL: "https://imoodtrackeri-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "imoodtrackeri",
+    storageBucket: "imoodtrackeri.firebasestorage.app",
+    messagingSenderId: "574089531404",
+    appId: "1:574089531404:web:3ed1d086427ff6b849de29"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+const moodRef = db.ref('mood');
+
+const loginBox = document.getElementById('login-box');
+const panel    = document.getElementById('panel');
+const loginErr = document.getElementById('login-err');
+const statusEl = document.getElementById('status');
+const buttons = {
+  normal:  document.getElementById('b-normal'),
+  despair: document.getElementById('b-despair'),
+  rage:    document.getElementById('b-rage'),
+  joyful:  document.getElementById('b-joyful'),
+  sad:  document.getElementById('b-sad'),
+  loving:  document.getElementById('b-loving'),
+  anxiety:  document.getElementById('b-anxiety'),
+  flow:  document.getElementById('b-flow'),
+};
+
+function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  loginErr.textContent = '';
+  auth.signInWithEmailAndPassword(email, pass)
+    .catch(err => { loginErr.textContent = '// доступ отклонён'; console.warn(err); });
+}
+
+function doLogout(){
+  auth.signOut();
+}
+
+// Enter в полях пароля/email тоже логинит
+document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('login-email').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+let moodListenerAttached = false;
+
+// Показываем панель только когда Firebase подтвердил реальный вход
+auth.onAuthStateChanged(user => {
+  if(user){
+    loginBox.style.display = 'none';
+    panel.style.display = 'flex';
+    if(!moodListenerAttached){
+      moodListenerAttached = true;
+      moodRef.on('value', snap=>{
+        const key = snap.val() || 'normal';
+        highlight(key);
+        statusEl.textContent = '// текущее: ' + key;
+      });
+    }
+  } else {
+    panel.style.display = 'none';
+    loginBox.style.display = 'flex';
+  }
+});
+
+function highlight(key){
+  Object.entries(buttons).forEach(([k,el])=>el.classList.toggle('active', k===key));
+}
+
+function setMood(key){
+  moodRef.set(key)
+    .then(()=>{ statusEl.textContent = '// обновлено: ' + key; })
+    .catch(err=>{ statusEl.textContent = '// ошибка записи: ' + err.message; });
+}
+</script>
+</body>
+</html>
