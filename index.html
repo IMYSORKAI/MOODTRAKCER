@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,33 +29,40 @@ h1{font-family:'VT323',monospace;font-size:28px;letter-spacing:.15em;color:#e34a
 #b-despair{border-color:#3a3a3a;color:#c9c9c9;}
 #b-rage{border-color:#7a0000;color:#ff3b3b;}
 #b-joyful{border-color:#0e6b28;color:#39ff7a;}
+#b-sad{border-color:#100e6b;color:#3c39ff;}
+#b-loving{border-color:#6b0e44;color:#ff398c;}
+#b-anxiety{border-color:#6b520e;color:#ffdb39;}
+#b-flow{border-color:#dadada;color:#ececec;}
 .mood-btn.active{background:#1E1800;box-shadow:0 0 12px currentColor;}
 #status{font-size:12px;color:#5A3D00;letter-spacing:.1em;margin-top:6px;}
 #logout{font-size:11px;color:#5A3D00;letter-spacing:.1em;text-decoration:underline;cursor:pointer;background:none;border:none;font-family:'Share Tech Mono',monospace;}
 </style>
 </head>
 <body>
-  <h1>MOOD CONTROL</h1>
+  <h1>MOOD CONTROL</h1>
 
-  <!-- ЭКРАН ВХОДА -->
-  <div id="login-box">
-    <input type="email" id="login-email" placeholder="" autocomplete="username">
-    <input type="password" id="login-pass" placeholder="" autocomplete="current-password">
-    <button onclick="doLogin()">ВОЙТИ</button>
-    <div id="login-err"></div>
-  </div>
+  <!-- ЭКРАН ВХОДА -->
+  <div id="login-box">
+    <input type="email" id="login-email" placeholder="" autocomplete="username">
+    <input type="password" id="login-pass" placeholder="" autocomplete="current-password">
+    <button onclick="doLogin()">ENTER</button>
+    <div id="login-err"></div>
+  </div>
 
-  <!-- ПАНЕЛЬ УПРАВЛЕНИЯ (видна только после входа) -->
-  <div id="panel">
-    <div class="grid">
-      <button class="mood-btn" id="b-normal"  onclick="setMood('normal')">NORMA</button>
-      <button class="mood-btn" id="b-despair" onclick="setMood('despair')">DESPAIR</button>
-      <button class="mood-btn" id="b-rage"    onclick="setMood('rage')">RAGE</button>
-      <button class="mood-btn" id="b-joyful"  onclick="setMood('joyful')">JOYFULL</button>
-    </div>
-    <div id="status">// подключение...</div>
-    <button id="logout" onclick="doLogout()">выйти</button>
-  </div>
+  <!-- ПАНЕЛЬ УПРАВЛЕНИЯ (видна только после входа) -->
+  <div id="panel">
+    <div class="grid">
+      <button class="mood-btn" id="b-normal"  onclick="setMood('normal')">NORMA</button>
+      <button class="mood-btn" id="b-despair" onclick="setMood('despair')">DESPAIR</button>
+      <button class="mood-btn" id="b-rage"    onclick="setMood('rage')">RAGE</button>
+      <button class="mood-btn" id="b-joyful"  onclick="setMood('joyful')">JOYFULL</button>
+      <button class="mood-btn" id="b-sad"     onclick="setMood('sad')">SAD</button>
+      <button class="mood-btn" id="b-loving"  onclick="setMood('loving')">LOVING</button>
+      <button class="mood-btn" id="b-anxiety" onclick="setMood('anxiety')">ANXIETY</button>
+      <button class="mood-btn" id="b-flow"    onclick="setMood('flow')">FLOW</button>
+    </div>
+    <button id="logout" onclick="doLogout()">EXIT</button>
+  </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -63,13 +70,13 @@ h1{font-family:'VT323',monospace;font-size:28px;letter-spacing:.15em;color:#e34a
 <script>
 // ВСТАВЬ ТОТ ЖЕ firebaseConfig, что и в index.html
 const firebaseConfig = {
-   apiKey: "AIzaSyB_TFv2gzLXMToJtxkcrl4cLdKWYvIGH2w",
-    authDomain: "imoodtrackeri.firebaseapp.com",
-    databaseURL: "https://imoodtrackeri-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "imoodtrackeri",
-    storageBucket: "imoodtrackeri.firebasestorage.app",
-    messagingSenderId: "574089531404",
-    appId: "1:574089531404:web:3ed1d086427ff6b849de29"
+   apiKey: "AIzaSyB_TFv2gzLXMToJtxkcrl4cLdKWYvIGH2w",
+    authDomain: "imoodtrackeri.firebaseapp.com",
+    databaseURL: "https://imoodtrackeri-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "imoodtrackeri",
+    storageBucket: "imoodtrackeri.firebasestorage.app",
+    messagingSenderId: "574089531404",
+    appId: "1:574089531404:web:3ed1d086427ff6b849de29"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -78,26 +85,30 @@ const db = firebase.database();
 const moodRef = db.ref('mood');
 
 const loginBox = document.getElementById('login-box');
-const panel    = document.getElementById('panel');
+const panel    = document.getElementById('panel');
 const loginErr = document.getElementById('login-err');
 const statusEl = document.getElementById('status');
 const buttons = {
-  normal:  document.getElementById('b-normal'),
-  despair: document.getElementById('b-despair'),
-  rage:    document.getElementById('b-rage'),
-  joyful:  document.getElementById('b-joyful'),
+  normal:  document.getElementById('b-normal'),
+  despair: document.getElementById('b-despair'),
+  rage:    document.getElementById('b-rage'),
+  joyful:  document.getElementById('b-joyful'),
+  sad:  document.getElementById('b-sad'),
+  loving:  document.getElementById('b-loving'),
+  anxiety:  document.getElementById('b-anxiety'),
+  flow:  document.getElementById('b-flow'),
 };
 
 function doLogin(){
-  const email = document.getElementById('login-email').value.trim();
-  const pass  = document.getElementById('login-pass').value;
-  loginErr.textContent = '';
-  auth.signInWithEmailAndPassword(email, pass)
-    .catch(err => { loginErr.textContent = '// доступ отклонён'; console.warn(err); });
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  loginErr.textContent = '';
+  auth.signInWithEmailAndPassword(email, pass)
+    .catch(err => { loginErr.textContent = '// доступ отклонён'; console.warn(err); });
 }
 
 function doLogout(){
-  auth.signOut();
+  auth.signOut();
 }
 
 // Enter в полях пароля/email тоже логинит
@@ -108,32 +119,33 @@ let moodListenerAttached = false;
 
 // Показываем панель только когда Firebase подтвердил реальный вход
 auth.onAuthStateChanged(user => {
-  if(user){
-    loginBox.style.display = 'none';
-    panel.style.display = 'flex';
-    if(!moodListenerAttached){
-      moodListenerAttached = true;
-      moodRef.on('value', snap=>{
-        const key = snap.val() || 'normal';
-        highlight(key);
-        statusEl.textContent = '// текущее: ' + key;
-      });
-    }
-  } else {
-    panel.style.display = 'none';
-    loginBox.style.display = 'flex';
-  }
+  if(user){
+    loginBox.style.display = 'none';
+    panel.style.display = 'flex';
+    if(!moodListenerAttached){
+      moodListenerAttached = true;
+      moodRef.on('value', snap=>{
+        const key = snap.val() || 'normal';
+        highlight(key);
+        statusEl.textContent = '// текущее: ' + key;
+      });
+    }
+  } else {
+    panel.style.display = 'none';
+    loginBox.style.display = 'flex';
+  }
 });
 
 function highlight(key){
-  Object.entries(buttons).forEach(([k,el])=>el.classList.toggle('active', k===key));
+  Object.entries(buttons).forEach(([k,el])=>el.classList.toggle('active', k===key));
 }
 
 function setMood(key){
-  moodRef.set(key)
-    .then(()=>{ statusEl.textContent = '// обновлено: ' + key; })
-    .catch(err=>{ statusEl.textContent = '// ошибка записи: ' + err.message; });
+  moodRef.set(key)
+    .then(()=>{ statusEl.textContent = '// обновлено: ' + key; })
+    .catch(err=>{ statusEl.textContent = '// ошибка записи: ' + err.message; });
 }
 </script>
 </body>
 </html>
+
